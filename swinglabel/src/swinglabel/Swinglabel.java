@@ -2,8 +2,7 @@ package swinglabel;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -18,26 +17,19 @@ public class Swinglabel implements Runnable {
     }
     
     private JPanel createContentPane() {
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel panel = new JPanel(new GridLayout(9, 1));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
         
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.FIRST_LINE_START;
-        c.weightx = 1;
-        
-        panel.add(createLabel("DejaVu Sans Mono", 10), c);
-        c.gridy++;
-        panel.add(createLabel("DejaVu Sans Mono", 12), c);
-        c.gridy++;
-        panel.add(createLabel("Consolas", 10), c);
-        c.gridy++;
-        panel.add(createLabel("Consolas", 12), c);
-        c.gridy++;
-        panel.add(createLabel(Font.DIALOG, 0), c);
+        panel.add(createLabel("DejaVu Sans Mono", 10));
+        panel.add(createLabel("Consolas", 10));
+        panel.add(new JLabel("<html>&nbsp;"));
+        panel.add(createLabel("DejaVu Sans Mono", 12));
+        panel.add(createLabel("Consolas", 12));
+        panel.add(new JLabel("<html>&nbsp;"));
+        panel.add(createLabel(Font.MONOSPACED, 0));
+        panel.add(createLabel(Font.SANS_SERIF, 0));
+        panel.add(createLabel(Font.SERIF, 0));
         
         return panel;
     }
