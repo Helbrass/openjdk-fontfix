@@ -1,4 +1,17 @@
 This project attemps to fix Java font rendering.
 
 PROBLEM:
-Both Sun Java and OpenJDK projects can't render swing fonts in the same manner system does it. GTKLookAndFeel widgets are 
+Both Sun Java and OpenJDK projects can't render swing fonts in the same manner system does it. GTKLookAndFeel widgets are using GTK for rendering, but any custom text rendering in Swing is still performed by JRE internal renderer.
+Here is the partial list of font rendering issues in OpenJDK:
+- renders fonts in 72 DPI internally, increasing font size to match system DPI settings. That breaks font geometry, which is obvious on Consolas of size 10 to 12.
+- ignores hinting and antialiasing settings from system.
+- LIGHT freetype hinting is not implemented.
+
+
+HOW TO USE
+- openjdk-b145 folder contains source code of build 145 of openjdk. It is used as project base. When it's rendering will be fixed - patch will be created with possibility to apply to any other openjdk version.
+- qtlabel - project in Qt with proper font rendering. OpenJDK rendering should give the same result.
+- qtlabel-opensuse-x64-bin - build of qtlabel project on OpenSUSE 11.4 x86_64 system.
+- swinglabel.sh is script to launch demo swing application to see how local openjdk build is performing text rendering.
+- swinglabel folder is swing demo application.
+- qtfreetype - minimal project in Qt that's using freetype2 API directly to perform rendering.

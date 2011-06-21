@@ -18,6 +18,7 @@ export ALT_DROPS_DIR="$( readlink -f "$( dirname "$0" )" )/drops"
 ## unchangable exports:
 export LANG=C
 export JAVA_HOME=""
+export LD_LIBRARY_PATH=""
 export BUILD_NUMBER=b00
 export MILESTONE=fontfix
 export ALLOW_DOWNLOADS=false

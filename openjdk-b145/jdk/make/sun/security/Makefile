@@ -66,7 +66,8 @@ ifdef DISABLE_INTREE_EC
 endif
 
 SUBDIRS       = $(INTREE_EC) other action util krb5
-SUBDIRS_misc  = jgss $(PKCS11) $(JGSS_WRAPPER) $(MSCAPI) smartcardio
+#SUBDIRS_misc  = jgss $(PKCS11) $(JGSS_WRAPPER) $(MSCAPI) smartcardio
+SUBDIRS_misc  = jgss $(JGSS_WRAPPER) $(MSCAPI) smartcardio
 SUBDIRS_tools = tools
 include $(BUILDDIR)/common/Subdirs.gmk
 
