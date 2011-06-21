@@ -1,0 +1,15 @@
+Qt is a good example how to use freetype2 on Linux. To see this example working in step-by-step mode you have to compile it in debug mode yourself.
+
+Qt source code: ftp://ftp.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.3.tar.gz
+You need 3 folders to build Qt:
+1) source folder - folder where your qt-everywhere-opensource-src-4.7.3.tar.gz archive was unpacked.
+2) build folder - folder where you will launch your make process.
+3) target folder - folder where complete qt build will be installed.
+
+To confiure Qt run:
+
+cd <BUILD PATH HERE> && echo yes | <QT SOURCE PATH HERE>/configure -debug -opensource -shared -plugin-sql-sqlite -nomake examples -nomake demos -nomake translations -nomake tools -nomake docs -webkit -xmlpatterns -xkb -xrender -xcursor -dbus-linked -xfixes -xrandr -xinerama -sm -no-nas-sound -system-libjpeg -system-libpng -no-accessibility -cups -stl -nis -system-zlib -qt-gif -iconv -exceptions -system-libtiff -glib -optimized-qmake -system-sqlite -no-qt3support -no-sql-mysql -xsync -xinput -no-gtkstyle -prefix <QT TARGET PATH HERE>
+
+After configure process will finish - take a look at it's output, maybe some parts are missing and you should install some additional *-devel packages and launch configuration once again.
+After configuration is done - start build with:
+make && make install

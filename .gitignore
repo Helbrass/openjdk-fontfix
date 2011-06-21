@@ -1,3 +1,6 @@
 openjdk-b145/build*
 swinglabel/nbproject/private*
 swinglabel/build*
+qtlabel/qtlabel-build-desktop*
+qtlabel/qtlabel.pro.user
+qtlabel-build-desktop*
