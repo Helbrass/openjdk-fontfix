@@ -5,34 +5,6 @@
 #include <QtCore/QDebug>
 #include <QtGui/QPainter>
 
-ftlabel::ftlabel(QWidget *parent) : QWidget(parent) {
-    int error = FT_Init_FreeType( &m_library );
-    if (error) {
-        qDebug() << "FT_Init error: " << error;
-        return;
-    }
-    error = FT_New_Face( m_library, "/usr/share/fonts/truetype/DejaVuSansMono.ttf", 0, &m_face);
-    if (error) {
-        qDebug() << "FT_New_Face error: " << error;
-        return;
-    }
-    int dpyx = physicalDpiX();
-    int dpyy = physicalDpiY();
-    qDebug() << "Physical dpy: " << dpyx << " x " << dpyy;
-    error = FT_Set_Char_Size( m_face, 0, 10*64, dpyx, dpyy);
-    if (error) {
-        qDebug() << "FT_Set_Char_Size error: " << error;
-        return;
-    }
-}
-
-ftlabel::~ftlabel() {
-    int error = FT_Done_FreeType( m_library );
-    if (error) {
-        qDebug() << "FT_Done error: " << error;
-    }
-}
-
 #define LCD_RENDERING (true)
 
 void ftlabel::paintEvent(QPaintEvent *event) {
@@ -139,5 +111,33 @@ void ftlabel::paintEvent(QPaintEvent *event) {
 
         x += m_face->glyph->advance.x >> 6;
 
+    }
+}
+
+ftlabel::ftlabel(QWidget *parent) : QWidget(parent) {
+    int error = FT_Init_FreeType( &m_library );
+    if (error) {
+        qDebug() << "FT_Init error: " << error;
+        return;
+    }
+    error = FT_New_Face( m_library, "/usr/share/fonts/truetype/DejaVuSansMono.ttf", 0, &m_face);
+    if (error) {
+        qDebug() << "FT_New_Face error: " << error;
+        return;
+    }
+    int dpyx = physicalDpiX();
+    int dpyy = physicalDpiY();
+    qDebug() << "Physical dpy: " << dpyx << " x " << dpyy;
+    error = FT_Set_Char_Size( m_face, 0, 10*64, dpyx, dpyy);
+    if (error) {
+        qDebug() << "FT_Set_Char_Size error: " << error;
+        return;
+    }
+}
+
+ftlabel::~ftlabel() {
+    int error = FT_Done_FreeType( m_library );
+    if (error) {
+        qDebug() << "FT_Done error: " << error;
     }
 }

@@ -413,7 +413,7 @@ static int setupFTContext(JNIEnv *env,
     if (context != NULL) {
         FT_Set_Transform(scalerInfo->face, &context->transform, NULL);
 
-        errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, 72, 72);
+        errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, 96, 96);
 
         if (errCode == 0) {
             errCode = FT_Activate_Size(scalerInfo->face->size);

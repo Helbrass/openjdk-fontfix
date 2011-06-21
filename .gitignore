@@ -4,3 +4,5 @@ swinglabel/build*
 qtlabel/qtlabel-build-desktop*
 qtlabel/qtlabel.pro.user
 qtlabel-build-desktop*
+qtfreetype-build-desktop*
+qtfreetype/qtfreetype.pro.user
