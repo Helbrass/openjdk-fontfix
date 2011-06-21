@@ -1,4 +1,4 @@
 This project attemps to fix Java font rendering.
 
 PROBLEM:
-Sun Java and OpenJDK projects 
+Both Sun Java and OpenJDK projects can't render swing fonts in the same manner system does it. GTKLookAndFeel widgets are 

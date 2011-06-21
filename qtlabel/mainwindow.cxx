@@ -5,6 +5,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     QPalette pltt = palette();
     pltt.setColor(QPalette::Window, Qt::white);
+    pltt.setColor(QPalette::WindowText, Qt::black);
     setPalette(pltt);
 
     QWidget* widget = new QWidget(this);
