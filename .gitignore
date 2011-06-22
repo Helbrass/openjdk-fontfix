@@ -1,8 +1,7 @@
 openjdk-b145/build*
-swinglabel/nbproject/private*
-swinglabel/build*
-qtlabel/qtlabel-build-desktop*
-qtlabel/qtlabel.pro.user
-qtlabel-build-desktop*
-qtfreetype-build-desktop*
-qtfreetype/qtfreetype.pro.user
+demo/java/nbproject/private*
+demo/java/build/*
+demo/qtlabel-build-desktop*
+demo/qt/qtlabel.pro.user
+demo/qtfreetype-build-desktop*
+demo/freetype/qtfreetype.pro.user
