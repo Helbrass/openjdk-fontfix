@@ -11,24 +11,24 @@ Here is the partial list of font rendering issues in OpenJDK:
 HOW TO USE
 1) check build.sh script for existing Sun JDK 6 path
 2) run build.sh to compile OpenJDK. Some additional dependencies may be required.
-3) when build is done - run swinglabel.sh to see how text is rendered by OpenJDK.
-4) compile qtlabel project and run it to see how Qt text is rendered.
-5) explore freetype2 API: qtfreetype/ftlabel.cxx is minimal example of freetype2 API usage, where you can hack experiment with additional logic and optimizations.
-6) explore Qt rendering: see qt_building_debugging.txt file for Qt building, then debug into qt-everywhere-opensource-src-4.7.3/src/gui/text/qfontengine_x11.cpp file to see how Qt is using freetype2.
+3) when build is done - run run-demo-java.sh to see how text is rendered by OpenJDK.
+4) compile demo/qt project and run it to see how Qt text is rendered.
+5) explore freetype2 API: demo/freetype/ftlabel.cxx is minimal example of freetype2 API usage, where you can hack experiment with additional logic and optimizations.
+6) explore Qt rendering: see demo/qt_building_debugging.txt file for Qt building, then debug into qt-everywhere-opensource-src-4.7.3/src/gui/text/qfontengine_x11.cpp file to see how Qt is using freetype2.
 7) try to fix OpenJDK rendering: you may start from openjdk-b145/jdk/src/share/native/sun/font/freetypeScaler.c where freetype2 is used by OpenJDK, and then hack your way into OpenJDK source code to fix its rendering.
 
 
 STRUCTURE
-- drops                         folder with openjdk build time dependencies that otherwise would be downloaded.
-- openjdk-b145                  folder contains source code of build 145 of openjdk. It is used as project base.
-                                When it's rendering will be fixed - patch will be created with possibility to apply
-                                to any other openjdk version.
-- qtfreetype                    minimal project in Qt that's using freetype2 API directly to perform rendering.
-- qtlabel                       project in Qt with proper defaul font rendering. OpenJDK rendering should give the
-                                same result.
-- swinglabel                    java project to demonstrate Swing text rendering. Similar to Qt one.
-- build.sh                      bash script to launch openjdk build. NOTE: do not forget to put proper path to
-                                existing JDK6 folder.
-- qt_building_debugging.txt     guide how to build Qt locally to debug its source code.
-- qtlabel-opensuse-x64-bin      qtlabel project compiled on OpenSUSE 11.4 x86_64 version.
-- swinglabel.sh                 bash script to launch swinglabel project with locally builded openjdk.
+- openjdk-b145          folder contains source code of build 145 of openjdk. It is used as project base. When
+                        it's rendering will be fixed - patch will be created with possibility to apply to any
+                        other openjdk version.
+- demo/freetype         minimal project in Qt that's using freetype2 API directly to perform rendering.
+- demo/java             java project to demonstrate Swing text rendering.
+- demo/qt               Qt project with proper default font rendering. OpenJDK rendering should give the same result.
+- demo/qt_building_debugging.txt
+                        guide how to build Qt locally to debug its source code.
+- demo/qtdemo-opensuse-x64-bin
+                        qt demo project compiled on OpenSUSE 11.4 x86_64 version.
+- build.sh              bash script to launch openjdk build. NOTE: do not forget to put proper path to existing JDK6 folder.
+- run-demo-java.sh      bash script to launch swinglabel project with locally builded openjdk.
+- run-demo-qt.sh        bash script to launch opensuse x86_64 version of Qt demo.
