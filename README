@@ -24,11 +24,13 @@ STRUCTURE
                         other openjdk version.
 - demo/freetype         minimal project in Qt that's using freetype2 API directly to perform rendering.
 - demo/java             java project to demonstrate Swing text rendering.
-- demo/qt               Qt project with proper default font rendering. OpenJDK rendering should give the same result.
+- demo/qt               Qt project with proper default font rendering. OpenJDK rendering should give the
+                        same result.
 - demo/qt_building_debugging.txt
                         guide how to build Qt locally to debug its source code.
 - demo/qtdemo-opensuse-x64-bin
                         qt demo project compiled on OpenSUSE 11.4 x86_64 version.
-- build.sh              bash script to launch openjdk build. NOTE: do not forget to put proper path to existing JDK6 folder.
+- build.sh              bash script to launch openjdk build. NOTE: do not forget to put proper path to
+                        existing JDK6 folder.
 - run-demo-java.sh      bash script to launch swinglabel project with locally builded openjdk.
 - run-demo-qt.sh        bash script to launch opensuse x86_64 version of Qt demo.
