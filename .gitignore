@@ -1,4 +1,7 @@
 openjdk-b145/build*
+openjdk-b145/.cproject
+openjdk-b145/.project
+openjdk-b145/.settings*
 demo/java/nbproject/private*
 demo/java/build/*
 demo/qtlabel-build-desktop*

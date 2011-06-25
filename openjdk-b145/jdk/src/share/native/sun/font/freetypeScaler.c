@@ -38,6 +38,7 @@
 #include FT_SIZES_H
 #include FT_OUTLINE_H
 #include FT_SYNTHESIS_H
+#include FT_LCD_FILTER_H
 
 #include "fontscaler.h"
 
@@ -413,6 +414,16 @@ static int setupFTContext(JNIEnv *env,
     if (context != NULL) {
         FT_Set_Transform(scalerInfo->face, &context->transform, NULL);
 
+        if (context->aaType == TEXT_AA_LCD_HRGB ||
+        		context->aaType == TEXT_AA_LCD_HBGR ||
+        		context->aaType == TEXT_AA_LCD_VBGR ||
+        		context->aaType == TEXT_AA_LCD_VRGB) {
+            errCode = FT_Library_SetLcdFilter(scalerInfo->library, FT_LCD_FILTER_DEFAULT);
+        } else {
+        	errCode = FT_Library_SetLcdFilter(scalerInfo->library, FT_LCD_FILTER_NONE);
+        }
+        // TODO do something with this possible error
+
         errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, 96, 96);
 
         if (errCode == 0) {
@@ -707,13 +718,12 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     UInt16 width, height;
     GlyphInfo *glyphInfo;
     int glyph_index;
-    int renderFlags = FT_LOAD_RENDER, target;
+    int loadFlags = FT_LOAD_NO_HINTING;
+    int renderFlags = FT_RENDER_MODE_NORMAL;
     FT_GlyphSlot ftglyph;
 
-    FTScalerContext* context =
-        (FTScalerContext*) jlong_to_ptr(pScalerContext);
-    FTScalerInfo *scalerInfo =
-             (FTScalerInfo*) jlong_to_ptr(pScaler);
+    FTScalerContext* context = (FTScalerContext*) jlong_to_ptr(pScalerContext);
+    FTScalerInfo *scalerInfo = (FTScalerInfo*) jlong_to_ptr(pScaler);
 
     if (isNullScalerContext(context) || scalerInfo == NULL) {
         return ptr_to_jlong(getNullGlyphImage());
@@ -725,11 +735,6 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
         return ptr_to_jlong(getNullGlyphImage());
     }
 
-    /* if algorithmic styling is required then we do not request bitmap */
-    if (context->doBold || context->doItalize) {
-        renderFlags =  FT_LOAD_DEFAULT;
-    }
-
     /* NB: in case of non identity transform
      we might also prefer to disable transform before hinting,
      and apply it explicitly after hinting is performed.
@@ -737,20 +742,23 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
 
     /* select appropriate hinting mode */
     if (context->aaType == TEXT_AA_OFF) {
-        target = FT_LOAD_TARGET_MONO;
+    	loadFlags |= FT_LOAD_TARGET_MONO;
+    	renderFlags = FT_RENDER_MODE_MONO;
     } else if (context->aaType == TEXT_AA_ON) {
-        target = FT_LOAD_TARGET_NORMAL;
+    	loadFlags |= FT_LOAD_TARGET_NORMAL;
+    	renderFlags = FT_RENDER_MODE_NORMAL;
     } else if (context->aaType == TEXT_AA_LCD_HRGB ||
                context->aaType == TEXT_AA_LCD_HBGR) {
-        target = FT_LOAD_TARGET_LCD;
+    	loadFlags |= FT_LOAD_TARGET_LCD;
+    	renderFlags = FT_RENDER_MODE_LCD;
     } else {
-        target = FT_LOAD_TARGET_LCD_V;
+    	loadFlags |= FT_LOAD_TARGET_LCD_V;
+    	renderFlags = FT_RENDER_MODE_LCD_V;
     }
-    renderFlags |= target;
 
     glyph_index = FT_Get_Char_Index(scalerInfo->face, glyphCode);
 
-    error = FT_Load_Glyph(scalerInfo->face, glyphCode, renderFlags);
+    error = FT_Load_Glyph(scalerInfo->face, glyphCode, loadFlags);
     if (error) {
         //do not destroy scaler yet.
         //this can be problem of particular context (e.g. with bad transform)
@@ -767,11 +775,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
         FT_GlyphSlot_Oblique(ftglyph);
     }
 
-    /* generate bitmap if it is not done yet
-     e.g. if algorithmic styling is performed and style was added to outline */
-    if (ftglyph->format == FT_GLYPH_FORMAT_OUTLINE) {
-        FT_Render_Glyph(ftglyph, FT_LOAD_TARGET_MODE(target));
-    }
+    FT_Render_Glyph(ftglyph, renderFlags);
 
     width  = (UInt16) ftglyph->bitmap.width;
     height = (UInt16) ftglyph->bitmap.rows;
