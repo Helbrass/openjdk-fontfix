@@ -1,6 +1,9 @@
 Qt is a good example how to use freetype2 on Linux. To see this example working in step-by-step mode you have to compile it in debug mode yourself.
 
 Qt source code: ftp://ftp.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.3.tar.gz
+
+To be sure that Qt is built with system freetype2 library - remove qt-everywhere-opensource-src-4.7.3/src/3rdparty/freetype folder.
+
 You need 3 folders to build Qt:
 1) source folder - folder where your qt-everywhere-opensource-src-4.7.3.tar.gz archive was unpacked.
 2) build folder - folder where you will launch your make process.

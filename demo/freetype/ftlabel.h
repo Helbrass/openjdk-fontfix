@@ -1,6 +1,7 @@
 #ifndef FTLABEL_H
 #define FTLABEL_H
 
+#include <QImage>
 #include <QWidget>
 
 #include <ft2build.h>
@@ -20,8 +21,12 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private:
+    // fields:
     FT_Library m_library;
     FT_Face m_face;
+    // methods:
+    QImage createLcdGlyphImage(FT_UInt glyphIndex);
+    QImage createNormalGlyphImage(FT_UInt glyphIndex);
 
 signals:
 
