@@ -36,6 +36,7 @@ public class Swinglabel implements Runnable {
     
     private JLabel createLabel(String fontFamily, int fontSize) {
         JLabel label = new JLabel("The quick brown fox jumps over the lazy dog (" + fontFamily + (fontSize == 0 ? ")" : " " + fontSize + ")"));
+        label.setForeground(Color.BLACK);
         Font font = new Font(fontFamily, Font.PLAIN, fontSize == 0 ? label.getFont().getSize() : fontSize);
         label.setFont(font);
         return label;
