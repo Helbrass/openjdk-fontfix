@@ -14,14 +14,16 @@ public class Main implements Runnable {
 
     private static final String ARGUMENT_SIZE = "--size";
     private static final String ARGUMENT_FILE = "--file";
+    private static final String DEFAULT_FILE = "/usr/share/fonts/truetype/DejaVuSansMono.ttf";
+    private static final int DEFAULT_SIZE = 10;
 
     @SuppressWarnings("CallToThreadDumpStack")
     public static void main(String[] args) {
         System.setProperty("swing.boldMetal", "false");
         printUsage();
 
-        int size = 10;
-        String file = "/usr/share/fonts/truetype/DejaVuSansMono.ttf";
+        int size = DEFAULT_SIZE;
+        String file = DEFAULT_FILE;
 
         if (args != null && args.length > 0 && args.length % 2 == 0) {
             for (int i = 0; i < args.length; i++) {
@@ -47,7 +49,11 @@ public class Main implements Runnable {
     private static void printUsage() {
         System.out.println(""
                 + "Java (swing) font viewer demo.\n"
-                + "By default shown font is DejaVu Sans Mono size 10.\n"
+                + "By default shown font is "
+                + DEFAULT_FILE
+                + " size "
+                + DEFAULT_SIZE
+                + ".\n"
                 + "usage: --file <path to TTF file to read font from> --size <font size>");
     }
 
@@ -66,8 +72,10 @@ public class Main implements Runnable {
         try {
             Font font = Font.createFont(Font.TRUETYPE_FONT, new File(file));
             font = font.deriveFont((float) size);
+
             JLabel label = new JLabel("The quick brown fox jumps over the lazy dog");
             label.setForeground(Color.BLACK);
+            label.setFont(font);
 
             JPanel panel = new JPanel(new BorderLayout());
             panel.setBackground(Color.WHITE);
