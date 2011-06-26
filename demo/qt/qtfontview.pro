@@ -1,16 +1,15 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2011-06-21T13:38:03
+# Project created by QtCreator 2011-06-26T11:12:27
 #
 #-------------------------------------------------
 
 QT       += core gui
 
-TARGET = qtlabel
+TARGET = qtfontview
 TEMPLATE = app
 
 
-SOURCES += main.cxx\
-        mainwindow.cxx
+SOURCES += main.cxx
 
-HEADERS  += mainwindow.h
+HEADERS  +=
