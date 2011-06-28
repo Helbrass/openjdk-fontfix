@@ -81,6 +81,8 @@ typedef struct FTScalerContext {
     int        renderFlags;   /* configuration specific to particular engine */
     int        pathType;
     int        ptsz;          /* size in points */
+    int        dpiX;          /* Horizontal DPI */
+    int        dpiY;          /* Vertical DPI */
 } FTScalerContext;
 
 #ifdef DEBUG
@@ -368,7 +370,7 @@ static double euclidianDistance(double a, double b) {
 JNIEXPORT jlong JNICALL
 Java_sun_font_FreetypeFontScaler_createScalerContextNative(
         JNIEnv *env, jobject scaler, jlong pScaler, jdoubleArray matrix,
-        jint aa, jint fm, jfloat boldness, jfloat italic) {
+        jint aa, jint fm, jfloat boldness, jfloat italic, jint dpiX, jint dpiY) {
     double dmat[4], ptsz;
     FTScalerContext *context =
             (FTScalerContext*) calloc(1, sizeof(FTScalerContext));
@@ -398,6 +400,9 @@ Java_sun_font_FreetypeFontScaler_createScalerContextNative(
      */
     context->doBold = (boldness != 1.0);
     context->doItalize = (italic != 0);
+    
+    context->dpiX = dpiX;
+    context->dpiY = dpiY;
 
     return ptr_to_jlong(context);
 }
@@ -424,7 +429,7 @@ static int setupFTContext(JNIEnv *env,
         }
         // TODO do something with this possible error
 
-        errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, 96, 96);
+        errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, context->dpiX, context->dpiY);
 
         if (errCode == 0) {
             errCode = FT_Activate_Size(scalerInfo->face->size);
