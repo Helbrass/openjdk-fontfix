@@ -25,6 +25,8 @@
 
 package sun.font;
 
+import java.awt.GraphicsEnvironment;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -214,8 +216,12 @@ class FreetypeFontScaler extends FontScaler {
             int aa, int fm, float boldness, float italic,
             boolean disableHinting) {
         if (nativeScaler != 0L) {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            AffineTransform normalizingTransform = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getNormalizingTransform();
+            int dpiX = (int) (normalizingTransform.getScaleX() * 72.0);
+            int dpiY = (int) (normalizingTransform.getScaleY() * 72.0);
             return createScalerContextNative(nativeScaler, matrix,
-                                             aa, fm, boldness, italic);
+                    aa, fm, boldness, italic, dpiX, dpiY);
         }
         return NullFontScaler.getNullScalerContext();
     }
@@ -254,7 +260,7 @@ class FreetypeFontScaler extends FontScaler {
     private native long getUnitsPerEMNative(long pScaler);
 
     native long createScalerContextNative(long pScaler, double[] matrix,
-            int aa, int fm, float boldness, float italic);
+            int aa, int fm, float boldness, float italic, int dpiX, int dpiY);
 
     /* Freetype scaler context does not contain any pointers that
        has to be invalidated if native scaler is bad */
