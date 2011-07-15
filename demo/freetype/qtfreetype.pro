@@ -11,10 +11,9 @@ TEMPLATE = app
 
 
 SOURCES += main.cxx\
-        mainwindow.cxx \
     ftlabel.cxx
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     ftlabel.h
 
 INCLUDEPATH = /usr/include/freetype2
