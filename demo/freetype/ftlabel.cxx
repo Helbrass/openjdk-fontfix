@@ -17,8 +17,9 @@ void ftlabel::paintEvent(QPaintEvent *event) {
 
     QString text = "The quick brown fox jumps over the lazy dog";
     // coordinates where we will start painting our text string:
-    int x = 30;
-    int y = 30;
+    int x = 0;
+    //int y = m_face->ascender / 64;
+    int y = 10;
 
     // one letter at a time:
     for (int i = 0; i < text.size(); i++) {
@@ -38,8 +39,11 @@ void ftlabel::paintEvent(QPaintEvent *event) {
           - We will draw image on coordinates X + padding, then we will increment X with font advance value,
             and it will be prepared to draw next image.
          */
-        painter.drawImage(x + m_face->glyph->bitmap_left, y - m_face->glyph->bitmap_top, glyphImage);
-        x += m_face->glyph->advance.x >> 6;
+        int left = m_face->glyph->bitmap_left;
+        int top = m_face->glyph->metrics.horiBearingY / 64;
+        painter.drawImage(x + left, y - top, glyphImage);
+        int inc = ((m_face->glyph->advance.x + 32) & -64) >> 6;
+        x += inc;
 
     }
 }
@@ -50,7 +54,7 @@ QImage ftlabel::createLcdGlyphImage(FT_UInt glyphIndex) {
 
     // DejaVu font is visually similar with autohinter and without, but Consolas is crippled with autohinter,
     // so we will load without autohinting:
-    error = FT_Load_Glyph( m_face, glyphIndex, FT_LOAD_TARGET_LCD | FT_LOAD_NO_HINTING);
+    error = FT_Load_Glyph( m_face, glyphIndex, FT_LOAD_TARGET_LCD);
     if (error) {
         qDebug() << "FT_Load_Glyph error: " << error;
         return QImage();
@@ -167,14 +171,15 @@ QImage ftlabel::createNormalGlyphImage(FT_UInt glyphIndex) {
     return glyphImage;
 }
 
-ftlabel::ftlabel(QWidget *parent) : QWidget(parent) {
+ftlabel::ftlabel(QString font, int size, QWidget *parent) : QWidget(parent) {
     int error = FT_Init_FreeType( &m_library );
     if (error) {
         qDebug() << "FT_Init error: " << error;
         return;
     }
     //error = FT_New_Face( m_library, "/usr/share/fonts/truetype/DejaVuSansMono.ttf", 0, &m_face);
-    error = FT_New_Face( m_library, "/usr/local/share/fonts/c/CONSOLA.ttf", 0, &m_face);
+    //error = FT_New_Face( m_library, "/usr/local/share/fonts/c/CONSOLA.ttf", 0, &m_face);
+    error = FT_New_Face( m_library, font.toLatin1(), 0, &m_face);
     if (error) {
         qDebug() << "FT_New_Face error: " << error;
         return;
@@ -186,11 +191,31 @@ ftlabel::ftlabel(QWidget *parent) : QWidget(parent) {
     qDebug() << "Physical dpy: " << dpyx << " x " << dpyy;
 
     // freetype2 is using 1/64 of point for char size, so 10 points will be 10*64:
-    error = FT_Set_Char_Size( m_face, 0, 10*64, dpyx, dpyy);
+    error = FT_Set_Char_Size( m_face, 0, size*64, dpyx, dpyy);
     if (error) {
         qDebug() << "FT_Set_Char_Size error: " << error;
         return;
     }
+
+    int height = m_face->ascender/72;
+    int width = 0;
+    QString text = "The quick brown fox jumps over the lazy dog";
+    for (int i = 0; i < text.size(); i++) {
+        FT_UInt glyph_index = FT_Get_Char_Index( m_face, text[i].toAscii() );
+        FT_Load_Glyph( m_face, glyph_index, FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP);
+        int inc = ((m_face->glyph->advance.x + 32) & -64) >> 6;
+        width += inc;
+    }
+
+    QSize s(width, height);
+    resize(s);
+    setMinimumSize(s);
+    setMaximumSize(s);
+
+    QPalette pltt = palette();
+    pltt.setColor(QPalette::Window, Qt::white);
+    setPalette(pltt);
+    setAutoFillBackground(true);
 }
 
 ftlabel::~ftlabel() {

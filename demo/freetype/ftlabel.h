@@ -14,7 +14,7 @@
 class ftlabel : public QWidget {
     Q_OBJECT
 public:
-    explicit ftlabel(QWidget *parent = 0);
+    explicit ftlabel(QString font, int size, QWidget *parent = 0);
     virtual ~ftlabel();
 
 protected:
