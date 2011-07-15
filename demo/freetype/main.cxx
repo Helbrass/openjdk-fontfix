@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     QString file("/usr/share/fonts/truetype/DejaVuSansMono.ttf");
-    int size = 8;
+    int size = 10;
 
     QTextStream out(stdout);
     out << "freetype2 font viewer demo.\n"

@@ -177,8 +177,7 @@ ftlabel::ftlabel(QString font, int size, QWidget *parent) : QWidget(parent) {
         qDebug() << "FT_Init error: " << error;
         return;
     }
-    //error = FT_New_Face( m_library, "/usr/share/fonts/truetype/DejaVuSansMono.ttf", 0, &m_face);
-    //error = FT_New_Face( m_library, "/usr/local/share/fonts/c/CONSOLA.ttf", 0, &m_face);
+
     error = FT_New_Face( m_library, font.toLatin1(), 0, &m_face);
     if (error) {
         qDebug() << "FT_New_Face error: " << error;
