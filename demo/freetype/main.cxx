@@ -63,10 +63,6 @@ int main(int argc, char *argv[])
     widget->adjustSize();
     widget->updateGeometry();
 
-    pltt.setColor(QPalette::Window, Qt::gray);
-    widget->setPalette(pltt);
-    widget->setAutoFillBackground(true);
-
     mainWindow->setWindowTitle("fontview freetype2");
     mainWindow->move(0, 0);
     mainWindow->resize(widget->size());
