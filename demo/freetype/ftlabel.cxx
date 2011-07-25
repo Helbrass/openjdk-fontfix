@@ -21,6 +21,11 @@ int dpiY() {
 }
 
 FcPattern* matchedPattern(const FcChar8* family) {
+    /*
+      we will create pattern to find our family and size in
+      fontconfig configuration, and then will return it's
+      properties:
+    */
     FcPattern* fcPattern = 0;
     fcPattern = FcPatternCreate();
     FcValue fcValue;
@@ -184,16 +189,17 @@ void ftlabel::paintEvent(QPaintEvent *event) {
 
     QPainter painter(this);
 
-    QString text = "The quick brown fox jumps over the lazy dog";
-    //QString text = "w";
+    //QString text = "The quick brown fox jumps over the lazy dog";
+    // the most problematic combination:
+    QString text = "wmp";
     // coordinates where we will start painting our text string:
     int x = 0;
-    //int y = m_face->ascender / 64;
-    int y = 10;
+    int y = m_face->size->metrics.ascender / 64;
 
     // one letter at a time:
     for (int i = 0; i < text.size(); i++) {
 
+        qDebug() << "creating image for: " << text[i];
         FT_UInt glyph_index = FT_Get_Char_Index( m_face, text[i].toAscii() );
 
         QImage glyphImage = renderingProperties.subpixel != RenderingProperties::Subpixel_NONE
@@ -215,14 +221,13 @@ void ftlabel::paintEvent(QPaintEvent *event) {
         int top = m_face->glyph->metrics.horiBearingY / 64;
         painter.drawImage(x + left, y - top, glyphImage);
         int inc = ((m_face->glyph->advance.x + 32) & -64) >> 6;
-        qDebug("x increment: %i", inc);
+        qDebug("x increment: %i, left: %i", inc, left);
         x += inc;
 
     }
 }
 
 QImage ftlabel::createLcdGlyphImage(FT_UInt glyphIndex) {
-    //qDebug() << "creating LCD glyph image";
     // reusable freetype error variable:
     int error = 0;
 
@@ -320,7 +325,7 @@ QImage ftlabel::createLcdGlyphImage(FT_UInt glyphIndex) {
     int _p = m_face->glyph->bitmap.pitch;
 
     // I have absolutely no idea what's the difference between ARGB32 and ARGB32_Premultiplied:
-    QImage glyphImage(_w, _h, QImage::Format_ARGB32);
+    QImage glyphImage(_w, _h, QImage::Format_ARGB32_Premultiplied);
     // filling image will absolutely transparent black:
     glyphImage.fill(qRgba(0, 0, 0, 0xff));
 
@@ -366,7 +371,7 @@ QImage ftlabel::createLcdGlyphImage(FT_UInt glyphIndex) {
             int g = 0xff + ( -0xff * srcG / 255 );
             int b = 0xff + ( -0xff * srcB / 255 );
 
-            //qDebug("RGB: %x%x%x", r, g, b);
+            qDebug("R-G-B: %x-%x-%x", r, g, b);
 
             glyphImage.setPixel(x, y, qRgba(r, g, b, g == 0xff ? 0 : 0xff));
 
