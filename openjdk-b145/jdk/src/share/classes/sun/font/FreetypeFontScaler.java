@@ -25,12 +25,13 @@
 
 package sun.font;
 
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.lang.ref.WeakReference;
+import sun.awt.X11GraphicsDevice;
 
 /* This is Freetype based implementation of FontScaler.
  *
@@ -216,12 +217,12 @@ class FreetypeFontScaler extends FontScaler {
             int aa, int fm, float boldness, float italic,
             boolean disableHinting) {
         if (nativeScaler != 0L) {
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            AffineTransform normalizingTransform = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getNormalizingTransform();
-            int dpiX = (int) (normalizingTransform.getScaleX() * 72.0);
-            int dpiY = (int) (normalizingTransform.getScaleY() * 72.0);
-            return createScalerContextNative(nativeScaler, matrix,
-                    aa, fm, boldness, italic, dpiX, dpiY);
+            GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            if (device instanceof X11GraphicsDevice) {
+                X11GraphicsDevice x11Device = (X11GraphicsDevice) device;
+                long x11DisplayPointer = x11Device.getDisplay();
+                return createScalerContextNative(nativeScaler, matrix, aa, fm, boldness, italic, x11DisplayPointer);
+            }
         }
         return NullFontScaler.getNullScalerContext();
     }
@@ -260,7 +261,7 @@ class FreetypeFontScaler extends FontScaler {
     private native long getUnitsPerEMNative(long pScaler);
 
     native long createScalerContextNative(long pScaler, double[] matrix,
-            int aa, int fm, float boldness, float italic, int dpiX, int dpiY);
+            int aa, int fm, float boldness, float italic, long x11DisplayPointer);
 
     /* Freetype scaler context does not contain any pointers that
        has to be invalidated if native scaler is bad */

@@ -29,6 +29,8 @@
 #include "sunfontids.h"
 #include "sun_font_FreetypeFontScaler.h"
 
+#include <X11/Xlib.h>
+
 #include<stdlib.h>
 #include <math.h>
 #include "ft2build.h"
@@ -81,8 +83,7 @@ typedef struct FTScalerContext {
     int        renderFlags;   /* configuration specific to particular engine */
     int        pathType;
     int        ptsz;          /* size in points */
-    int        dpiX;          /* Horizontal DPI */
-    int        dpiY;          /* Vertical DPI */
+    jlong      x11Display;    /* X11 display pointer */
 } FTScalerContext;
 
 #ifdef DEBUG
@@ -370,7 +371,7 @@ static double euclidianDistance(double a, double b) {
 JNIEXPORT jlong JNICALL
 Java_sun_font_FreetypeFontScaler_createScalerContextNative(
         JNIEnv *env, jobject scaler, jlong pScaler, jdoubleArray matrix,
-        jint aa, jint fm, jfloat boldness, jfloat italic, jint dpiX, jint dpiY) {
+        jint aa, jint fm, jfloat boldness, jfloat italic, jlong x11DisplayPointer) {
     double dmat[4], ptsz;
     FTScalerContext *context =
             (FTScalerContext*) calloc(1, sizeof(FTScalerContext));
@@ -401,10 +402,17 @@ Java_sun_font_FreetypeFontScaler_createScalerContextNative(
     context->doBold = (boldness != 1.0);
     context->doItalize = (italic != 0);
     
-    context->dpiX = dpiX;
-    context->dpiY = dpiY;
+    context->x11Display = x11DisplayPointer;
 
     return ptr_to_jlong(context);
+}
+
+static int dpiY(Display* display) {
+    int hmm = DisplayHeightMM(display, 0);
+    int h = DisplayHeight(display, 0);
+    // basic formula is:
+    // 25.4 * h / hmm + 0.5
+    return (h * 254 + hmm * 5) / (hmm * 10);
 }
 
 static int setupFTContext(JNIEnv *env,
@@ -427,9 +435,11 @@ static int setupFTContext(JNIEnv *env,
         } else {
         	errCode = FT_Library_SetLcdFilter(scalerInfo->library, FT_LCD_FILTER_NONE);
         }
-        // TODO do something with this possible error
 
-        errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, context->dpiX, context->dpiY);
+        int dpi = dpiY((Display*)jlong_to_ptr(context->x11Display));
+
+        // TODO do something with this possible error
+        errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, 0, dpi);
 
         if (errCode == 0) {
             errCode = FT_Activate_Size(scalerInfo->face->size);
