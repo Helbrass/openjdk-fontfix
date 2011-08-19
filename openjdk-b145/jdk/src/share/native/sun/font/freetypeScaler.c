@@ -733,8 +733,10 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     UInt16 width, height;
     GlyphInfo *glyphInfo;
     int glyph_index;
+    /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     int loadFlags = FT_LOAD_NO_HINTING;
     int renderFlags = FT_RENDER_MODE_NORMAL;
+    */
     FT_GlyphSlot ftglyph;
 
     FTScalerContext* context = (FTScalerContext*) jlong_to_ptr(pScalerContext);
@@ -756,6 +758,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
      Or we can disable hinting. */
 
     /* select appropriate hinting mode */
+    /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     if (context->aaType == TEXT_AA_OFF) {
     	loadFlags |= FT_LOAD_TARGET_MONO;
     	renderFlags = FT_RENDER_MODE_MONO;
@@ -770,10 +773,14 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     	loadFlags |= FT_LOAD_TARGET_LCD_V;
     	renderFlags = FT_RENDER_MODE_LCD_V;
     }
+    */
 
     glyph_index = FT_Get_Char_Index(scalerInfo->face, glyphCode);
 
+    /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     error = FT_Load_Glyph(scalerInfo->face, glyphCode, loadFlags);
+    */
+    error = FT_Load_Glyph(scalerInfo->face, glyphCode, FT_LOAD_TARGET_NORMAL | FT_LOAD_FORCE_AUTOHINT);
     if (error) {
         //do not destroy scaler yet.
         //this can be problem of particular context (e.g. with bad transform)
@@ -790,7 +797,10 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
         FT_GlyphSlot_Oblique(ftglyph);
     }
 
+    /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     FT_Render_Glyph(ftglyph, renderFlags);
+    */
+    FT_Render_Glyph(ftglyph, FT_RENDER_MODE_LCD);
 
     width  = (UInt16) ftglyph->bitmap.width;
     height = (UInt16) ftglyph->bitmap.rows;
