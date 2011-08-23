@@ -29,6 +29,8 @@
 #include "sunfontids.h"
 #include "sun_font_FreetypeFontScaler.h"
 
+#include <fontconfig/fontconfig.h>
+
 #include <X11/Xlib.h>
 
 #include<stdlib.h>
@@ -427,6 +429,7 @@ static int setupFTContext(JNIEnv *env,
     if (context != NULL) {
         FT_Set_Transform(scalerInfo->face, &context->transform, NULL);
 
+        /*
         if (context->aaType == TEXT_AA_LCD_HRGB ||
         		context->aaType == TEXT_AA_LCD_HBGR ||
         		context->aaType == TEXT_AA_LCD_VBGR ||
@@ -435,6 +438,7 @@ static int setupFTContext(JNIEnv *env,
         } else {
         	errCode = FT_Library_SetLcdFilter(scalerInfo->library, FT_LCD_FILTER_NONE);
         }
+        */
 
         int dpi = dpiY((Display*)jlong_to_ptr(context->x11Display));
 
@@ -718,6 +722,149 @@ static void CopyFTSubpixelVToSubpixel(const void* srcImage, int srcRowBytes,
     }
 }
 
+typedef struct {
+
+	FT_Render_Mode ftRenderMode;
+	int ftLoadFlags;
+	FT_LcdFilter ftLcdFilter;
+
+} RenderingProperties;
+
+static FcPattern* matchedPattern(const FcChar8* family, double ptSize) {
+    /*
+      we will create pattern to find our family and size in
+      fontconfig configuration, and then will return it's
+      properties:
+    */
+    FcPattern* fcPattern = 0;
+    fcPattern = FcPatternCreate();
+    FcValue fcValue;
+    fcValue.type = FcTypeString;
+    fcValue.u.s = family;
+    FcPatternAdd(fcPattern, FC_FAMILY, fcValue, FcTrue);
+    FcPatternAddBool(fcPattern, FC_SCALABLE, FcTrue);
+    FcPatternAddDouble(fcPattern, FC_SIZE, ptSize);
+    // TODO FcPatternAddInteger(pattern, FC_WEIGHT, weight_value);
+    // TODO FcPatternAddInteger(pattern, FC_SLANT, slant_value);
+    // TODO FcPatternAddDouble(pattern, FC_PIXEL_SIZE, size_value);
+    // TODO FcPatternAddInteger(pattern, FC_WIDTH, stretch); 100 in most cases
+    FcConfigSubstitute(0, fcPattern, FcMatchPattern);
+    FcConfigSubstitute(0, fcPattern, FcMatchFont);
+    FcDefaultSubstitute(fcPattern);
+    FcResult res;
+
+    FcPattern *pattern = 0;
+    pattern = FcFontMatch(0, fcPattern, &res);
+    FcPatternDestroy(fcPattern);
+    return pattern;
+}
+
+static void readFontconfig(const FcChar8* family, double ptSize, jint aaType, RenderingProperties* rp) {
+
+	//FcPattern *pattern = matchedPattern((const FcChar8 *) ftFace->family_name);
+	FcPattern *pattern = matchedPattern(family, ptSize);
+
+	int ftLoadFalgs = FT_LOAD_DEFAULT;
+	FT_Render_Mode ftRenderMode;
+	FT_LcdFilter ftLcdFilter;
+	char horizontal = 1;
+	FcBool b;
+
+	// subpixel order:
+	if (aaType == TEXT_AA_ON)
+		ftRenderMode = FT_RENDER_MODE_NORMAL;
+	else if (aaType == TEXT_AA_OFF)
+		ftRenderMode = FT_RENDER_MODE_MONO;
+	else if (FcPatternGetBool(pattern, FC_ANTIALIAS, 0, &b) == FcResultMatch)
+		if (b) {
+			int subpixel = FC_RGBA_UNKNOWN;
+			FcPatternGetInteger(pattern, FC_RGBA, 0, &subpixel);
+			if (subpixel == FC_RGBA_UNKNOWN)
+				subpixel = FC_RGBA_NONE;
+			switch (subpixel) {
+			case FC_RGBA_NONE:
+				ftRenderMode = FT_RENDER_MODE_NORMAL;
+				break;
+			case FC_RGBA_RGB:
+			case FC_RGBA_BGR:
+				ftRenderMode = FT_RENDER_MODE_LCD;
+				horizontal = 1;
+				break;
+			case FC_RGBA_VRGB:
+			case FC_RGBA_VBGR:
+				ftRenderMode = FT_RENDER_MODE_LCD_V;
+				horizontal = 0;
+				break;
+			default:
+				break;
+			}
+		} else {
+			ftRenderMode = FT_RENDER_MODE_NORMAL;
+		}
+
+	// loading mode:
+	if (aaType == TEXT_AA_OFF)
+		ftLoadFalgs |= FT_LOAD_TARGET_MONO;
+	else {
+		int hint_style = FC_HINT_NONE;
+		FcPatternGetInteger(pattern, FC_HINT_STYLE, 0, &hint_style);
+		switch (hint_style) {
+		case FC_HINT_NONE:
+			ftLoadFalgs |= FT_LOAD_NO_HINTING;
+			break;
+		case FC_HINT_SLIGHT:
+			ftLoadFalgs |= FT_LOAD_TARGET_LIGHT;
+			break;
+		case FC_HINT_MEDIUM:
+			ftLoadFalgs |= FT_LOAD_TARGET_NORMAL;
+			break;
+		case FC_HINT_FULL:
+			if (aaType == TEXT_AA_ON)
+				ftLoadFalgs |= FT_LOAD_TARGET_NORMAL;
+			else
+				ftLoadFalgs |= horizontal ? FT_LOAD_TARGET_LCD : FT_LOAD_TARGET_LCD_V;
+			break;
+		default:
+			// what else to use as default?
+			ftLoadFalgs |= FT_LOAD_TARGET_NORMAL;
+			break;
+		}
+	}
+
+	// autohinting:
+	if (FcPatternGetBool(pattern, FC_AUTOHINT, 0, &b) == FcResultMatch)
+		if (b)
+			ftLoadFalgs |= FT_LOAD_FORCE_AUTOHINT;
+
+	// LCD filter:
+	int filter = FC_LCD_DEFAULT;
+	FcPatternGetInteger(pattern, FC_LCD_FILTER, 0, &filter);
+	switch (filter) {
+	case FC_LCD_NONE:
+		ftLcdFilter = FT_LCD_FILTER_NONE;
+		break;
+	case FC_LCD_DEFAULT:
+		ftLcdFilter = FT_LCD_FILTER_DEFAULT;
+		break;
+	case FC_LCD_LIGHT:
+		ftLcdFilter = FT_LCD_FILTER_LIGHT;
+		break;
+	case FC_LCD_LEGACY:
+		ftLcdFilter = FT_LCD_FILTER_LEGACY;
+		break;
+	default:
+		// new unknown lcd filter type?! will use default one:
+		ftLcdFilter = FT_LCD_FILTER_DEFAULT;
+		break;
+	}
+
+	FcPatternDestroy(pattern);
+
+	rp->ftRenderMode = ftRenderMode;
+	rp->ftLoadFlags = ftLoadFalgs;
+	rp->ftLcdFilter = ftLcdFilter;
+
+}
 
 /*
  * Class:     sun_font_FreetypeFontScaler
@@ -775,12 +922,19 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     }
     */
 
+    RenderingProperties renderingProperties;
+    readFontconfig((const FcChar8 *) scalerInfo->face->family_name, context->ptsz, context->aaType, &renderingProperties);
+
     glyph_index = FT_Get_Char_Index(scalerInfo->face, glyphCode);
+
+    error = FT_Library_SetLcdFilter(scalerInfo->library, renderingProperties.ftLcdFilter);
+    if (error)
+    	return ptr_to_jlong(getNullGlyphImage());
 
     /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     error = FT_Load_Glyph(scalerInfo->face, glyphCode, loadFlags);
     */
-    error = FT_Load_Glyph(scalerInfo->face, glyphCode, FT_LOAD_TARGET_NORMAL | FT_LOAD_FORCE_AUTOHINT);
+    error = FT_Load_Glyph(scalerInfo->face, glyphCode, renderingProperties.ftLoadFlags);
     if (error) {
         //do not destroy scaler yet.
         //this can be problem of particular context (e.g. with bad transform)
@@ -800,7 +954,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     FT_Render_Glyph(ftglyph, renderFlags);
     */
-    FT_Render_Glyph(ftglyph, FT_RENDER_MODE_LCD);
+    FT_Render_Glyph(ftglyph, renderingProperties.ftRenderMode);
 
     width  = (UInt16) ftglyph->bitmap.width;
     height = (UInt16) ftglyph->bitmap.rows;

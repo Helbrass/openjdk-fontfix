@@ -128,7 +128,7 @@ else
   ifeq ($(USING_SYSTEM_FT_LIB), false)
     FREETYPE_LIB = $(LIB_LOCATION)/$(LIB_PREFIX)freetype.$(LIBRARY_SUFFIX).6
   endif
-  OTHER_LDLIBS += -L$(FREETYPE_LIB_PATH) -lfreetype
+  OTHER_LDLIBS += -L$(FREETYPE_LIB_PATH) -lfreetype -lfontconfig
 endif 
 
 library:: $(FREETYPE_LIB)
