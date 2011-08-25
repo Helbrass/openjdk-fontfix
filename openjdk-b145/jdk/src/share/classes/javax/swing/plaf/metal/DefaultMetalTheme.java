@@ -111,9 +111,7 @@ public class DefaultMetalTheme extends MetalTheme {
     /**
      * Sizes for the fonts.
      */
-    private static final int[] fontSizes = {
-        12, 12, 12, 12, 12, 10
-    };
+    private static final int[] fontSizes;
 
     // note the properties listed here can currently be used by people
     // providing runtimes to hint what fonts are good.  For example the bold
@@ -189,6 +187,21 @@ public class DefaultMetalTheme extends MetalTheme {
         else {
             PLAIN_FONTS = true;
         }
+    }
+
+    static {
+        int size = 9;
+        String sizeString = java.security.AccessController.doPrivileged(
+            new GetPropertyAction("swing.fontSize"));
+        if (sizeString != null && sizeString.length() > 0) {
+            try {
+                size = Integer.parseInt(sizeString);
+            } catch (Exception ignore) {
+            }
+        }
+        float smallfont = size;
+        smallfont = smallfont * 0.8f + 0.5f;
+        fontSizes = new int[] {size, size, size, size, size, (int)smallfont};
     }
 
     private static final ColorUIResource primary1 = new ColorUIResource(
