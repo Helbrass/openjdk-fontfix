@@ -93,7 +93,7 @@ final class ${LAF_NAME}Defaults {
 
     private Map<JComponent, Map<Region, SynthStyle>> overridesCache =
             new WeakHashMap<JComponent, Map<Region, SynthStyle>>();
-    
+
     /**
      * Our fallback style to avoid NPEs if the proper style cannot be found in
      * this class. Not sure if relying on DefaultSynthStyle is the best choice.
@@ -135,7 +135,16 @@ final class ${LAF_NAME}Defaults {
         //regions and their states that this class will use for later lookup.
         //Additional regions can be registered later by 3rd party components.
         //These are simply the default registrations.
-        defaultFont = FontUtilities.getFontConfigFUIR("sans", Font.PLAIN, 12);
+        int size = 9;
+        String sizeString = java.security.AccessController.doPrivileged(
+            new GetPropertyAction("swing.fontSize"));
+        if (sizeString != null && sizeString.length() > 0) {
+            try {
+                size = Integer.parseInt(sizeString);
+            } catch (Exception ignore) {
+            }
+        }
+        defaultFont = FontUtilities.getFontConfigFUIR("sans", Font.PLAIN, size);
         defaultStyle = new DefaultSynthStyle();
         defaultStyle.setFont(defaultFont);
 
@@ -247,7 +256,7 @@ ${UI_DEFAULT_INIT}
                 //found.
                 if (foundStyle == null ||
                    (foundStyle.parts.length < s.parts.length) ||
-                   (foundStyle.parts.length == s.parts.length 
+                   (foundStyle.parts.length == s.parts.length
                     && foundStyle.simple && !s.simple)) {
                     foundStyle = s;
                 }
@@ -530,11 +539,11 @@ ${UI_DEFAULT_INIT}
                 }
                 return s;
             }
-            
+
             // lazily create the style if necessary
             if (style == null)
                 style = new NimbusStyle(prefix, null);
-            
+
             // return the style
             return style;
         }
@@ -818,19 +827,19 @@ ${UI_DEFAULT_INIT}
         private Insets insets;
         private Painter painter;
         private String painterKey;
-        
+
         PainterBorder(String painterKey, Insets insets) {
             this.insets = insets;
             this.painterKey = painterKey;
         }
-        
+
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
             if (painter == null) {
                 painter = (Painter)UIManager.get(painterKey);
                 if (painter == null) return;
             }
-            
+
             g.translate(x, y);
             if (g instanceof Graphics2D)
                 painter.paint((Graphics2D)g, c, w, h);
