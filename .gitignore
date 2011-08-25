@@ -10,3 +10,7 @@ demo/qtlabel-build-desktop*
 demo/qt/qtlabel.pro.user
 demo/qtfreetype-build-desktop*
 demo/freetype/qtfreetype.pro.user
+demo/copperchloride/build/*
+demo/copperchloride/dist/*
+demo/copperchloride/nbproject/private*
+openjdk-b145/jdk/make/netbeans/swing/nbproject/private*

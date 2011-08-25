@@ -1,7 +1,8 @@
 #!/bin/sh
 #set -x
 
-OPT_FLAGS="-Dawt.useSystemAAFontSettings=lcd"
+#OPT_FLAGS="-Dawt.useSystemAAFontSettings=lcd"
+OPT_FLAGS=
 
 thisdirname=$( readlink -f "$( dirname "$0" )" )
 javai586="$thisdirname/openjdk-b145/build/linux-i586/j2re-image/bin/java"
