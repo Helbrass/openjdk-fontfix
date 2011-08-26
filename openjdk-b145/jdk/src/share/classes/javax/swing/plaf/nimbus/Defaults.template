@@ -137,7 +137,7 @@ final class ${LAF_NAME}Defaults {
         //These are simply the default registrations.
         int size = 9;
         String sizeString = java.security.AccessController.doPrivileged(
-            new GetPropertyAction("swing.fontSize"));
+            new sun.security.action.GetPropertyAction("swing.fontSize"));
         if (sizeString != null && sizeString.length() > 0) {
             try {
                 size = Integer.parseInt(sizeString);
