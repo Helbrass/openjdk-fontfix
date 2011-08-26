@@ -927,9 +927,8 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
 
     glyph_index = FT_Get_Char_Index(scalerInfo->face, glyphCode);
 
-    error = FT_Library_SetLcdFilter(scalerInfo->library, renderingProperties.ftLcdFilter);
-    if (error)
-    	return ptr_to_jlong(getNullGlyphImage());
+    // we will not check for error because freetype2 will ignore this if there is no LCD support:
+    FT_Library_SetLcdFilter(scalerInfo->library, renderingProperties.ftLcdFilter);
 
     /* COMMENTED OUT FOR NOW, WILL USE HARDCODED VALUES INSTEAD
     error = FT_Load_Glyph(scalerInfo->face, glyphCode, loadFlags);
