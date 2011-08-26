@@ -14,3 +14,4 @@ demo/copperchloride/build/*
 demo/copperchloride/dist/*
 demo/copperchloride/nbproject/private*
 openjdk-b145/jdk/make/netbeans/swing/nbproject/private*
+openjdk-b145/jdk/make/netbeans/awt2d/nbproject/private*
