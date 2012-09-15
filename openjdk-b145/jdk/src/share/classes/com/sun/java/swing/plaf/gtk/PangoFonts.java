@@ -159,32 +159,6 @@ class PangoFonts {
          * equivalent sizes. If such a change were ever to be made in GTK
          * we would need to update for that.
          */
-        double dsize = size;
-        int dpi = 96;
-        Object value =
-            Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-        if (value instanceof Integer) {
-            dpi = ((Integer)value).intValue() / 1024;
-            if (dpi == -1) {
-              dpi = 96;
-            }
-            if (dpi < 50) { /* 50 dpi is the minimum value gnome allows */
-                dpi = 50;
-            }
-            /* The Java rasteriser assumes pts are in a user space of
-             * 72 dpi, so we need to adjust for that.
-             */
-            dsize = ((double)(dpi * size)/ 72.0);
-        } else {
-            /* If there's no property, GTK scales for the resolution
-             * reported by the Xserver using the formula listed above.
-             * fontScale already accounts for the 72 dpi Java 2D space.
-             */
-            dsize = size * fontScale;
-        }
-
-        /* Round size to nearest integer pt size */
-        size = (int)(dsize + 0.5);
         if (size < 1) {
             size = 1;
         }
@@ -193,13 +167,10 @@ class PangoFonts {
         if (FontUtilities.mapFcName(fcFamilyLC) != null) {
             /* family is a Fc/Pango logical font which we need to expand. */
             Font font =  FontUtilities.getFontConfigFUIR(fcFamilyLC, style, size);
-            font = font.deriveFont(style, (float)dsize);
             return new FontUIResource(font);
         } else {
             /* It's a physical font which we will create with a fallback */
             Font font = new Font(family, style, size);
-            /* a roundabout way to set the font size in floating points */
-            font = font.deriveFont(style, (float)dsize);
             FontUIResource fuir = new FontUIResource(font);
             return FontUtilities.getCompositeFontUIResource(fuir);
         }
