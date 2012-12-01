@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
 #include "memory/allocation.inline.hpp"
 #include "prims/methodHandles.hpp"
 
@@ -36,6 +37,11 @@
 #endif
 
 #define BIND(label) bind(label); BLOCK_COMMENT(#label ":")
+
+// Workaround for C++ overloading nastiness on '0' for RegisterOrConstant.
+static RegisterOrConstant constant(int value) {
+  return RegisterOrConstant(value);
+}
 
 address MethodHandleEntry::start_compiled_entry(MacroAssembler* _masm,
                                                 address interpreted_entry) {
@@ -139,9 +145,9 @@ oop MethodHandles::RicochetFrame::compute_saved_args_layout(bool read_cache, boo
 
 void MethodHandles::RicochetFrame::generate_ricochet_blob(MacroAssembler* _masm,
                                                           // output params:
-                                                          int* frame_size_in_words,
                                                           int* bounce_offset,
-                                                          int* exception_offset) {
+                                                          int* exception_offset,
+                                                          int* frame_size_in_words) {
   (*frame_size_in_words) = RicochetFrame::frame_size_in_bytes() / wordSize;
 
   address start = __ pc();
@@ -366,7 +372,7 @@ void MethodHandles::load_stack_move(MacroAssembler* _masm,
                                     Register rdi_stack_move,
                                     Register rcx_amh,
                                     bool might_be_negative) {
-  BLOCK_COMMENT("load_stack_move");
+  BLOCK_COMMENT("load_stack_move {");
   Address rcx_amh_conversion(rcx_amh, java_lang_invoke_AdapterMethodHandle::conversion_offset_in_bytes());
   __ movl(rdi_stack_move, rcx_amh_conversion);
   __ sarl(rdi_stack_move, CONV_STACK_MOVE_SHIFT);
@@ -387,6 +393,7 @@ void MethodHandles::load_stack_move(MacroAssembler* _masm,
     __ stop("load_stack_move of garbage value");
     __ BIND(L_ok);
   }
+  BLOCK_COMMENT("} load_stack_move");
 }
 
 #ifdef ASSERT
@@ -555,13 +562,11 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
   // emit WrongMethodType path first, to enable jccb back-branch from main path
   Label wrong_method_type;
   __ bind(wrong_method_type);
-  Label invoke_generic_slow_path;
+  Label invoke_generic_slow_path, invoke_exact_error_path;
   assert(methodOopDesc::intrinsic_id_size_in_bytes() == sizeof(u1), "");;
   __ cmpb(Address(rbx_method, methodOopDesc::intrinsic_id_offset_in_bytes()), (int) vmIntrinsics::_invokeExact);
   __ jcc(Assembler::notEqual, invoke_generic_slow_path);
-  __ push(rax_mtype);       // required mtype
-  __ push(rcx_recv);        // bad mh (1st stacked argument)
-  __ jump(ExternalAddress(Interpreter::throw_WrongMethodType_entry()));
+  __ jmp(invoke_exact_error_path);
 
   // here's where control starts out:
   __ align(CodeEntryAlignment);
@@ -594,6 +599,11 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
   DEBUG_ONLY(__ movptr(mh_receiver_slot_addr, (int32_t)0x999999));
 
   __ jump_to_method_handle_entry(rcx_recv, rdi_temp);
+
+  // error path for invokeExact (only)
+  __ bind(invoke_exact_error_path);
+  // Stub wants expected type in rax and the actual type in rcx
+  __ jump(ExternalAddress(StubRoutines::throw_WrongMethodTypeException_entry()));
 
   // for invokeGeneric (only), apply argument and result conversions on the fly
   __ bind(invoke_generic_slow_path);
@@ -630,11 +640,6 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
   __ jump_to_method_handle_entry(rcx, rdi_temp);
 
   return entry_point;
-}
-
-// Workaround for C++ overloading nastiness on '0' for RegisterOrConstant.
-static RegisterOrConstant constant(int value) {
-  return RegisterOrConstant(value);
 }
 
 // Helper to insert argument slots into the stack.
@@ -1147,7 +1152,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
 
   trace_method_handle(_masm, entry_name(ek));
 
-  BLOCK_COMMENT(entry_name(ek));
+  BLOCK_COMMENT(err_msg("Entry %s {", entry_name(ek)));
 
   switch ((int) ek) {
   case _raise_exception:
@@ -1163,27 +1168,15 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       __ mov(rsp, saved_last_sp);  // cut the stack back to where the caller started
 
       Register rbx_method = rbx_temp;
-      Label L_no_method;
-      // FIXME: fill in _raise_exception_method with a suitable java.lang.invoke method
       __ movptr(rbx_method, ExternalAddress((address) &_raise_exception_method));
-      __ testptr(rbx_method, rbx_method);
-      __ jccb(Assembler::zero, L_no_method);
 
       const int jobject_oop_offset = 0;
       __ movptr(rbx_method, Address(rbx_method, jobject_oop_offset));  // dereference the jobject
-      __ testptr(rbx_method, rbx_method);
-      __ jccb(Assembler::zero, L_no_method);
       __ verify_oop(rbx_method);
 
       NOT_LP64(__ push(rarg2_required));
       __ push(rdi_pc);         // restore caller PC
       __ jmp(rbx_method_fce);  // jump to compiled entry
-
-      // Do something that is at least causes a valid throw from the interpreter.
-      __ bind(L_no_method);
-      __ push(rarg2_required);
-      __ push(rarg1_actual);
-      __ jump(ExternalAddress(Interpreter::throw_WrongMethodType_entry()));
     }
     break;
 
@@ -1292,7 +1285,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
   case _bound_int_direct_mh:
   case _bound_long_direct_mh:
     {
-      bool direct_to_method = (ek >= _bound_ref_direct_mh);
+      const bool direct_to_method = (ek >= _bound_ref_direct_mh);
       BasicType arg_type  = ek_bound_mh_arg_type(ek);
       int       arg_slots = type2size[arg_type];
 
@@ -1632,14 +1625,16 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
           //   rax = src_addr + swap_bytes
           //   rbx = dest_addr
           //   while (rax <= rbx) *(rax - swap_bytes) = *(rax + 0), rax++;
-          __ addptr(rbx_destslot, wordSize);
+          // dest_slot denotes an exclusive upper limit
+          int limit_bias = OP_ROT_ARGS_DOWN_LIMIT_BIAS;
+          if (limit_bias != 0)
+            __ addptr(rbx_destslot, - limit_bias * wordSize);
           move_arg_slots_down(_masm,
                               Address(rax_argslot, swap_slots * wordSize),
                               rbx_destslot,
                               -swap_slots,
                               rax_argslot, rdx_temp);
-
-          __ subptr(rbx_destslot, wordSize);
+          __ subptr(rbx_destslot, swap_slots * wordSize);
         }
         // pop the original first chunk into the destination slot, now free
         for (int i = 0; i < swap_slots; i++) {
@@ -1929,7 +1924,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // In the non-retaining case, this might move keep2 either up or down.
       // We don't have to copy the whole | RF... collect | complex,
       // but we must adjust RF.saved_args_base.
-      // Also, from now on, we will forget about the origial copy of |collect|.
+      // Also, from now on, we will forget about the original copy of |collect|.
       // If we are retaining it, we will treat it as part of |keep2|.
       // For clarity we will define |keep3| = |collect|keep2| or |keep2|.
 
@@ -1986,7 +1981,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // Net shift (&new_argv - &old_argv) is (close_count - open_count).
       bool zero_open_count = (open_count == 0);  // remember this bit of info
       if (move_keep3 && fix_arg_base) {
-        // It will be easier t have everything in one register:
+        // It will be easier to have everything in one register:
         if (close_count.is_register()) {
           // Deduct open_count from close_count register to get a clean +/- value.
           __ subptr(close_count.as_register(), open_count);
@@ -2396,6 +2391,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
     __ nop();
     return;
   }
+  BLOCK_COMMENT(err_msg("} Entry %s", entry_name(ek)));
   __ hlt();
 
   address me_cookie = MethodHandleEntry::start_compiled_entry(_masm, interp_entry);
