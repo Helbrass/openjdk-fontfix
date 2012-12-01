@@ -269,7 +269,7 @@ klassOop constantPoolOopDesc::klass_ref_at_if_loaded_check(constantPoolHandle th
 methodOop constantPoolOopDesc::method_at_if_loaded(constantPoolHandle cpool,
                                                    int which, Bytecodes::Code invoke_code) {
   assert(!constantPoolCacheOopDesc::is_secondary_index(which), "no indy instruction here");
-  if (cpool->cache() == NULL)  return false;  // nothing to load yet
+  if (cpool->cache() == NULL)  return NULL;  // nothing to load yet
   int cache_index = which - CPCACHE_INDEX_TAG;
   if (!(cache_index >= 0 && cache_index < cpool->cache()->length())) {
     if (PrintMiscellaneous && (Verbose||WizardMode)) {
