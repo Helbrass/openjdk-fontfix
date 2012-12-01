@@ -13,7 +13,7 @@ ALT_BOOTDIR=/opt/jdk1.6.0_26
 ## exporting local env vars:
 export ALT_BOOTDIR
 ## resolving canonical path of current dir + '/drops' suffix:
-export ALT_DROPS_DIR="$( readlink -f "$( dirname "$0" )" )/openjdk-b145/drops"
+export ALT_DROPS_DIR="$( readlink -f "$( dirname "$0" )" )/openjdk7/drops"
 
 ## unchangable exports:
 export LANG=C
@@ -25,5 +25,5 @@ export ALLOW_DOWNLOADS=false
 
 ## starting real build process in subshell:
 (
-  cd $(dirname $0)/openjdk-b145 && make sanity && make
+  cd $(dirname $0)/openjdk7 && make sanity && make
 )
