@@ -1,7 +1,7 @@
-openjdk-b145/build*
-openjdk-b145/.cproject
-openjdk-b145/.project
-openjdk-b145/.settings*
+openjdk7/build*
+openjdk7/.cproject
+openjdk7/.project
+openjdk7/.settings*
 *.pro.user
 *-build-desktop/
 demo/java/nbproject/private*
@@ -13,5 +13,5 @@ demo/freetype/qtfreetype.pro.user
 demo/copperchloride/build/*
 demo/copperchloride/dist/*
 demo/copperchloride/nbproject/private*
-openjdk-b145/jdk/make/netbeans/swing/nbproject/private*
-openjdk-b145/jdk/make/netbeans/awt2d/nbproject/private*
+openjdk7/jdk/make/netbeans/swing/nbproject/private*
+openjdk7/jdk/make/netbeans/awt2d/nbproject/private*
